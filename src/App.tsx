@@ -1,38 +1,43 @@
-// src/App.tsx
-import { useEffect, useState } from 'react'
-import { supabase } from './supabaseClient'
+import ReactFlow, {
+  Background,
+  Controls,
+  MiniMap,
+  useReactFlow,
+  ReactFlowProvider
+} from "@xyflow/react";
+import "reactflow/dist/style.css";
+import { useFlow, useFlowActions } from "@/lib/store/useFlow";
 
 function App() {
-  const [templates, setTemplates] = useState<any[]>([])
-
-  useEffect(() => {
-    const fetchTemplates = async () => {
-      const { data, error } = await supabase.from('process_templates').select('*')
-      if (error) {
-        console.error('Erro ao buscar dados:', error.message)
-      } else {
-        setTemplates(data || [])
-      }
-    }
-
-    fetchTemplates()
-  }, [])
+  const { nodes, edges, setNodes, setEdges } = useFlow();
+  const { addNode, onConnect, deleteNode } = useFlowActions();
 
   return (
-    <div>
-      <h1>Templates de Processos</h1>
-      <ul>
-        {templates.map((template, idx) => (
-          <li key={idx}>
-            <strong>{template.name}</strong><br />
-            Criado em: {new Date(template.created_at).toLocaleString('pt-BR')}
-            Descrição: {template.description}
-          </li>
-        ))}
-      </ul>
+    <div style={{ width: "100%", height: "100vh" }}>
+      <ReactFlow
+        nodes={nodes}
+        edges={edges}
+        onNodesChange={(changes) =>
+          setNodes((nds) => nds.map((n) => ({ ...n, selected: false })))
+        }
+        onEdgesChange={(changes) =>
+          setEdges((eds) => eds.map((e) => ({ ...e, selected: false })))
+        }
+        onConnect={onConnect}
+        fitView
+      >
+        <Background />
+        <MiniMap />
+        <Controls />
+      </ReactFlow>
     </div>
-  )
+  );
 }
 
-export default App
-
+export default function WrappedApp() {
+  return (
+    <ReactFlowProvider>
+      <App />
+    </ReactFlowProvider>
+  );
+}
